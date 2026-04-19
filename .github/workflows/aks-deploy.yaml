@@ -31,8 +31,8 @@ jobs:
             service_principal_password: ${{ secrets.AZURE_APP_SECRET }}
             registry: ${{ secrets.REGISTRY }}
             repository: ${{ secrets.REPO }}
-            folder: ./app
-            dockerfile: ./app/Dockerfile
+            folder: app
+            dockerfile: Dockerfile
             image: ${{ github.sha }}
             git_access_token: ${{ secrets.GITHUB_TOKEN }}
 
