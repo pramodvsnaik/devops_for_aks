@@ -19,7 +19,7 @@ az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
 
 az group create \
  --name rg-cosmotal-dva \
- --location EastUS
+ --location eastus
 
 
 
