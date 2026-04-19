@@ -2,7 +2,7 @@ name: "AKS Deployment"
 on:
   push:
     branches:
-      - main
+      - master
 
 
 
