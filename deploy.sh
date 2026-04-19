@@ -11,15 +11,15 @@ echo "$AZURE_TENANT_ID"
 
 az login \
  --service-principal \
- -u "$AZURE_APP_ID" \
- -p "$AZURE_SECRET" \
+ -u "${{ secrets.ACR_USERNAME }}" \
+ -p "${{ secrets.ACR_PASSWORD }}" \
  -t 'dda939ff-0d51-46fa-9b52-82fa3b976391'
 
-az account set --subscription "$AZURE_SUBSCRIPTION_ID"
+az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
 
 az group create \
  --name rg-cosmotal-dva \
- --location northeurope
+ --location EastUS
 
 
 
