@@ -32,8 +32,8 @@ jobs:
           registry: ${{ secrets.REGISTRY }}
           repository: ${{ secrets.REPO }}
           folder: ./app/Dockerfile
-          image: myapp
-          tag: v1-${{ github.sha }}
+          image: myapp:${{ github.sha }}
+
 
          
       - name: Deploy to AKS
