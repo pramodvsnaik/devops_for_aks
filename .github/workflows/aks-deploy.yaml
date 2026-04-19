@@ -26,13 +26,15 @@ jobs:
       - name: ACR build and push
         uses: azure/acr-build@v1
         with:
-          tenant: ${{ secrets.AZURE_TENANT_ID }}
-          service_principal: ${{ secrets.AZURE_APP_ID }}
-          service_principal_password: ${{ secrets.AZURE_APP_SECRET }}
-          registry: ${{ secrets.REGISTRY }}
-          repository: "${{ secrets.REPO }}:${{ github.sha }}"
-          folder: ./app/Dockerfile
-          image: ${{ github.sha }}
+            tenant: ${{ secrets.AZURE_TENANT_ID }}
+            service_principal: ${{ secrets.AZURE_APP_ID }}
+            service_principal_password: ${{ secrets.AZURE_APP_SECRET }}
+            registry: ${{ secrets.REGISTRY }}
+            repository: ${{ secrets.REPO }}
+            folder: ./app
+            dockerfile: ./app/Dockerfile
+            image: ${{ github.sha }}
+            git_access_token: ${{ secrets.GITHUB_TOKEN }}
 
 
          
