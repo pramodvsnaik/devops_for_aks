@@ -33,6 +33,8 @@ jobs:
           repository: blue
           folder: ./app/Dockerfile
           image: blue:v1
+          tag: v1-${{ github.sha }}
+          
          
       - name: Deploy to AKS
         uses: azure/aks-set-context@v1
