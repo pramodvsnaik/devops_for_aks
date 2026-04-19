@@ -29,12 +29,12 @@ jobs:
           tenant: ${{ secrets.AZURE_TENANT_ID }}
           service_principal: ${{ secrets.AZURE_APP_ID }}
           service_principal_password: ${{ secrets.AZURE_APP_SECRET }}
-          registry: cosmotal.azurecr.io
+          registry: cosmotal
           repository: blue
           folder: ./app/Dockerfile
-          image: blue:v1
+          image: myapp
           tag: v1-${{ github.sha }}
-          
+
          
       - name: Deploy to AKS
         uses: azure/aks-set-context@v1
