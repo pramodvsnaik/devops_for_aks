@@ -14,8 +14,8 @@ spec:
         app: blue
     spec:
       containers: 
-        name: blue-container
-        image: cosmotal.azurecr.io/blue:v1
+      - name: blue-container
+        image: acrcosmotal.azurecr.io/app/91116297133907383ec790837bb1c9cf4b7f818d:91116297
          ports:
           - name: http 
             containerPort: 80
