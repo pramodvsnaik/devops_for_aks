@@ -39,7 +39,6 @@ az aks create \
  --resource-group "$RESOURCE_GROUP" \
  --name "$AKS_NAME" \
  --node-count 1 \
- --enable-addons monitoring \
  --generate-ssh-keys \
  --attach-acr "$REGISTRY" \
  --node-vm-size Standard_D2d_v4
