@@ -42,4 +42,4 @@ az aks create \
  --enable-addons monitoring \
  --generate-ssh-keys \
  --attach-acr "$REGISTRY" \
- --vm-size Standard_D2d_v4
+ --node-vm-size Standard_D2d_v4
