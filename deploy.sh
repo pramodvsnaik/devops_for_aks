@@ -7,9 +7,6 @@ if [ -f ".env" ]; then
   set +a
 else
   echo "Error: .env file not found!"
-  exit 1
-fi
-else
   echo "Setting from GitHub Secrets"
   AZURE_APP_ID=${{ secrets.ACR_USERNAME }}
   AZURE_SECRET=${{ secrets.ACR_PASSWORD }}
