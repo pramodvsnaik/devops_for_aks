@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - main
   workflow_dispatch:
 
 env:
@@ -17,37 +18,90 @@ env:
   AKS_NAME: ${{ secrets.AKS_NAME }}
 
 jobs:
-  build-and-deploy:
+  build-infrastructure:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
+      
+        #login
       - name: Set up Azure CLI
         uses: azure/login@v1
         with:
-          creds: "{\"clientId\":\"${{ secrets.AZURE_APP_ID }}\",\"clientSecret\":\"${{
-            secrets.AZURE_APP_SECRET }}\",\"subscriptionId\":\"${{
-            secrets.AZURE_SUBSCRIPTION_ID }}\",\"tenantId\":\"${{
-            secrets.AZURE_TENANT_ID }}\"}"
+          creds: "{\"clientId\":\"${{ secrets.AZURE_APP_ID }}\",\"clientSecret\":\"${{ secrets.AZURE_APP_SECRET }}\",\"subscriptionId\":\"${{ secrets.AZURE_SUBSCRIPTION_ID }}\",\"tenantId\":\"${{ secrets.AZURE_TENANT_ID }}\"}"
 
-      - name: provision resources
-        run: |
-          chmod +x deploy.sh
-          ./deploy.sh
-
-      - name: ACR build and push
-        uses: azure/acr-build@v1
+      - name: Create AKS cluster
+        uses: azure/aks-create@v1
         with:
-          tenant: ${{ secrets.AZURE_TENANT_ID }}
-          service_principal: ${{ secrets.AZURE_APP_ID }}
-          service_principal_password: ${{ secrets.AZURE_APP_SECRET }}
+          creds: "{\"clientId\":\"${{ secrets.AZURE_APP_ID }}\",\"clientSecret\":\"${{ secrets.AZURE_APP_SECRET }}\",\"subscriptionId\":\"${{ secrets.AZURE_SUBSCRIPTION_ID }}\",\"tenantId\":\"${{ secrets.AZURE_TENANT_ID }}\"}"
+          cluster-name: ${{ secrets.AKS_NAME }}
+          resource-group: ${{ secrets.RESOURCE_GROUP }}
+          location: ${{ secrets.LOCATION }}
+          node-count: 1
+          enable-addons: monitoring
+          generate-ssh-keys: true
+
+      - name: Create KV
+        uses: azure/keyvault-create@v1
+        with:
+          creds: "{\"clientId\":\"${{ secrets.AZURE_APP_ID }}\",\"clientSecret\":\"${{ secrets.AZURE_APP_SECRET }}\",\"subscriptionId\":\"${{ secrets.AZURE_SUBSCRIPTION_ID }}\",\"tenantId\":\"${{ secrets.AZURE_TENANT_ID }}\"}"
+          vault-name: ${{ secrets.KV_NAME }}
+          resource-group: ${{ secrets.RESOURCE_GROUP }}
+          location: ${{ secrets.LOCATION }}
+
+      - name: Create ACR
+        uses: azure/acr-create@v1
+        with:
+          creds: "{\"clientId\":\"${{ secrets.AZURE_APP_ID }}\",\"clientSecret\":\"${{ secrets.AZURE_APP_SECRET }}\",\"subscriptionId\":\"${{ secrets.AZURE_SUBSCRIPTION_ID }}\",\"tenantId\":\"${{ secrets.AZURE_TENANT_ID }}\"}"
+          registry-name: ${{ secrets.REGISTRY }}
+          resource-group: ${{ secrets.RESOURCE_GROUP }}
+          location: ${{ secrets.LOCATION }}
+          sku: Basic
+      
+      - name: Create role assignment
+        uses: azure/role-assignment-create@v1
+        with:
+          creds: "{\"clientId\":\"${{ secrets.AZURE_APP_ID }}\",\"clientSecret\":\"${{ secrets.AZURE_APP_SECRET }}\",\"subscriptionId\":\"${{ secrets.AZURE_SUBSCRIPTION_ID }}\",\"tenantId\":\"${{ secrets.AZURE_TENANT_ID }}\"}"
+          role: "AcrPush"
+          assignee: ${{ secrets.AZURE_APP_ID }}
+          scope: "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ secrets.RESOURCE_GROUP }}/providers/Microsoft.ContainerRegistry/registries/${{ secrets.REGISTRY }}"
+      
+      - name: Create Vnet
+        uses: azure/vnet-create@v1
+        with:
+          creds: "{\"clientId\":\"${{ secrets.AZURE_APP_ID }}\",\"clientSecret\":\"${{ secrets.AZURE_APP_SECRET }}\",\"subscriptionId\":\"${{ secrets.AZURE_SUBSCRIPTION_ID }}\",\"tenantId\":\"${{ secrets.AZURE_TENANT_ID }}\"}"
+          vnet-name: ${{ secrets.VNET_NAME }}
+          resource-group: ${{ secrets.RESOURCE_GROUP }}
+          location: ${{ secrets.LOCATION }}
+          address-prefixes: "10.0.0.0/16"
+
+      - name: Create subnet
+        uses: azure/subnet-create@v1
+        with:
+          creds: "{\"clientId\":\"${{ secrets.AZURE_APP_ID }}\",\"clientSecret\":\"${{ secrets.AZURE_APP_SECRET }}\",\"subscriptionId\":\"${{ secrets.AZURE_SUBSCRIPTION_ID }}\",\"tenantId\":\"${{ secrets.AZURE_TENANT_ID }}\"}"
+          subnet-name: ${{ secrets.SUBNET_NAME }}
+          vnet-name: ${{ secrets.VNET_NAME }}
+          resource-group: ${{ secrets.RESOURCE_GROUP }}
+          address-prefixes: "10.0.1.0/24"
+
+      - name: ACR login
+        uses: azure/acr-login@v1
+        with:
+          creds: "{\"clientId\":\"${{ secrets.AZURE_APP_ID }}\",\"clientSecret\":\"${{ secrets.AZURE_APP_SECRET }}\",\"subscriptionId\":\"${{ secrets.AZURE_SUBSCRIPTION_ID }}\",\"tenantId\":\"${{ secrets.AZURE_TENANT_ID }}\"}"
           registry: ${{ secrets.REGISTRY }}
-          repository: ${{ secrets.REPO }}
-          folder: app
-          dockerfile: Dockerfile
-          image: ${{ github.sha }}
-          git_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      #- name: ACR build and push
+      #  uses: azure/acr-build@v1
+      # with:
+      #    tenant: ${{ secrets.AZURE_TENANT_ID }}
+      #    service_principal: ${{ secrets.AZURE_APP_ID }}
+      #    service_principal_password: ${{ secrets.AZURE_APP_SECRET }}
+      #    registry: ${{ secrets.REGISTRY }}
+      #    repository: ${{ secrets.REPO }}
+      #    folder: app
+      #    dockerfile: Dockerfile
+      #    image: ${{ github.sha }}
+      #    git_access_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy to AKS
         uses: azure/aks-set-context@v1
@@ -64,8 +118,4 @@ jobs:
         with:
           version: "latest"
 
-      - name: Deploy to AKS
-        uses: azure/k8s-deploy@v1
-        with:
-          manifests: |
-            k8s/blue-deploy.yaml
+
