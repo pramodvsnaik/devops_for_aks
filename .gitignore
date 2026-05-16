@@ -1,3 +1,6 @@
 .env
 dva.env
 *.env
+*.txt
+.txt
+sample.txt

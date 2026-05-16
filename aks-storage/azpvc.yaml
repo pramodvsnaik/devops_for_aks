@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+   app: "cosmo"     
+  name: "cosmo-pvc"
+spec: 
+  accessModes:
+   - ReadWriteOnce
+  storageClassName: managed-premium-retain-sc-cosmotal
+  volumeMode: Block
+  resources:
+    requests:
+      storage: 1Gi

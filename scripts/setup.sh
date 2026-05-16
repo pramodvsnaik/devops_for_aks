@@ -1,32 +1,4 @@
-#!/bin/bash
-
-if [ -f ".env" ]; then
-  echo "Loading environment variables from .env"
-  set -a
-  source .env
-  set +a
-else
-  echo "Error: .env file not found!"
-  echo "Setting from GitHub Secrets"
-
-fi
-
-echo "$AZURE_APP_ID"
-echo "$AZURE_SECRET"
-echo "$AZURE_TENANT_ID"
-
-az login \
- --service-principal \
- -u "$AZURE_APP_ID" \
- -p "$AZURE_SECRET" \
- -t "$AZURE_TENANT_ID" -o none
-
-az account set --subscription "$AZURE_SUBSCRIPTION_ID"
-
-echo "Creating Resource Group: $RESOURCE_GROUP"
-az group create \
- --name "$RESOURCE_GROUP" \
- --location "$LOCATION"
+ 
 
 echo "Creating ACR: $REGISTRY"
 az acr create \
@@ -63,15 +35,28 @@ echo "Creating AKS Cluster: $AKS_NAME"
 az aks create \
  --resource-group "$RESOURCE_GROUP" \
  --name "$AKS_NAME" \
+ --location "$LOCATION" \
+ --tier Free \
  --node-count 1 \
  --generate-ssh-keys \
  --attach-acr "$REGISTRY" \
+ --enable-managed-identity \
+ --enable-oidc-issuer \
  --node-vm-size Standard_D2d_v4 \
  --vnet-subnet-id "$SUBNET_ID" \
  --service-cidr 172.20.0.0/16 \
  --dns-service-ip '172.20.0.10' \
- --pod-cidr '10.244.0.0/16'
+ --pod-cidr '10.244.0.0/16' \
+ --addons monitoring \
+ --enable-cluster-autoscaler \
+ --enable-azure-monitor-metrics
 
+az aks nodepool update  \
+ --resource-group "$RESOURCE_GROUP" \
+ --cluster-name "$AKS_NAME" \
+ --name systempool \
+ --node-count 1 \
+ --node-taints CriticalAddonsOnly=true:NoSchedule
 
 echo "Creating mysql flexible-server"
 
