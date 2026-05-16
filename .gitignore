@@ -4,3 +4,8 @@ dva.env
 *.txt
 .txt
 sample.txt
+*.exe
+*.log
+*.zip
+*.tar.gz
+*.exe.stackdump
